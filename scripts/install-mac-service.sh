@@ -1,10 +1,11 @@
 #!/bin/sh
-# Runs the app in the background on this Mac: starts at login, restarts if it crashes.
+# Runs the app in the background on this Mac: starts at login, restarts if it crashes,
+# at low CPU and disk priority so it never gets in the way of anything else.
 # Undo with: launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.ration-app.plist
 set -e
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-NODE="$(command -v node || true)"
-[ -n "$NODE" ] || { echo "Node.js not found. Install it with: brew install node"; exit 1; }
+PYTHON="$(command -v python3 || true)"
+[ -n "$PYTHON" ] || { echo "python3 not found. Install it with: xcode-select --install"; exit 1; }
 
 case "$APP_DIR" in
   "$HOME/Desktop"*|"$HOME/Documents"*|"$HOME/Downloads"*)
@@ -24,13 +25,19 @@ cat > "$PLIST" <<EOF
   <key>Label</key><string>com.ration-app</string>
   <key>ProgramArguments</key>
   <array>
-    <string>$NODE</string>
-    <string>--env-file-if-exists=.env</string>
-    <string>server.js</string>
+    <string>$PYTHON</string>
+    <string>-u</string>
+    <string>server.py</string>
   </array>
   <key>WorkingDirectory</key><string>$APP_DIR</string>
+  <key>EnvironmentVariables</key>
+  <dict><key>PYTHONDONTWRITEBYTECODE</key><string>1</string></dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>ProcessType</key><string>Background</string>
+  <key>Nice</key><integer>10</integer>
+  <key>LowPriorityIO</key><true/>
   <key>StandardOutPath</key><string>$APP_DIR/data/server.log</string>
   <key>StandardErrorPath</key><string>$APP_DIR/data/server.log</string>
 </dict>
@@ -41,3 +48,5 @@ launchctl bootstrap "gui/$(id -u)" "$PLIST"
 sleep 1
 echo "Installed and running. Addresses and logs: $APP_DIR/data/server.log"
 tail -n 4 "$APP_DIR/data/server.log" 2>/dev/null || true
+echo "After updating the code (git pull), restart it with:"
+echo "  launchctl kickstart -k gui/$(id -u)/com.ration-app"

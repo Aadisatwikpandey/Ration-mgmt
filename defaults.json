@@ -1,0 +1,483 @@
+{
+ "version": 1,
+ "rev": 1,
+ "settings": {
+  "startMonth": "2026-10",
+  "people": 3,
+  "basePeople": 3,
+  "monthlyDay": 1,
+  "weeklyDay": 0,
+  "reminderTime": "10:00",
+  "budgetLow": 5500,
+  "budgetHigh": 7000
+ },
+ "categories": {
+  "staples": {
+   "title": "Staples & grains",
+   "freq": "monthly",
+   "order": 0
+  },
+  "dals": {
+   "title": "Dals & pulses",
+   "freq": "monthly",
+   "order": 1
+  },
+  "basics": {
+   "title": "Oil, ghee & basics",
+   "freq": "monthly",
+   "order": 2
+  },
+  "powders": {
+   "title": "Powdered masalas",
+   "freq": "monthly",
+   "order": 3
+  },
+  "whole": {
+   "title": "Whole spices",
+   "freq": "monthly",
+   "order": 4
+  },
+  "extras": {
+   "title": "Extras & household",
+   "freq": "monthly",
+   "order": 5
+  },
+  "fresh": {
+   "title": "Weekly fresh",
+   "freq": "weekly",
+   "order": 6
+  }
+ },
+ "items": {
+  "atta": {
+   "name": "Atta (whole wheat)",
+   "cat": "staples",
+   "order": 0,
+   "qty": 12000,
+   "unit": "g"
+  },
+  "rice": {
+   "name": "Rice (Sona Masoori)",
+   "cat": "staples",
+   "order": 1,
+   "qty": 8000,
+   "unit": "g"
+  },
+  "poha": {
+   "name": "Poha (thick)",
+   "cat": "staples",
+   "order": 2,
+   "qty": 6000,
+   "unit": "g"
+  },
+  "rava": {
+   "name": "Rava / sooji",
+   "cat": "staples",
+   "order": 3,
+   "qty": 1000,
+   "unit": "g"
+  },
+  "besan": {
+   "name": "Besan",
+   "cat": "staples",
+   "order": 4,
+   "qty": 500,
+   "unit": "g"
+  },
+  "maida": {
+   "name": "Maida",
+   "cat": "staples",
+   "order": 5,
+   "qty": 500,
+   "unit": "g"
+  },
+  "semiya": {
+   "name": "Vermicelli (semiya)",
+   "cat": "staples",
+   "order": 6,
+   "qty": 500,
+   "unit": "g"
+  },
+  "oats": {
+   "name": "Oats or cornflakes",
+   "cat": "staples",
+   "order": 7,
+   "qty": 500,
+   "unit": "g",
+   "note": "optional"
+  },
+  "toor": {
+   "name": "Toor dal",
+   "cat": "dals",
+   "order": 8,
+   "qty": 2000,
+   "unit": "g"
+  },
+  "moong": {
+   "name": "Moong dal (yellow)",
+   "cat": "dals",
+   "order": 9,
+   "qty": 1000,
+   "unit": "g"
+  },
+  "chana": {
+   "name": "Chana dal",
+   "cat": "dals",
+   "order": 10,
+   "qty": 500,
+   "unit": "g"
+  },
+  "masoor": {
+   "name": "Masoor dal",
+   "cat": "dals",
+   "order": 11,
+   "qty": 500,
+   "unit": "g"
+  },
+  "urad": {
+   "name": "Urad dal",
+   "cat": "dals",
+   "order": 12,
+   "qty": 500,
+   "unit": "g",
+   "note": "tadka / dosa"
+  },
+  "rajma": {
+   "name": "Rajma or chole",
+   "cat": "dals",
+   "order": 13,
+   "qty": 1000,
+   "unit": "g"
+  },
+  "gmoong": {
+   "name": "Green moong (whole)",
+   "cat": "dals",
+   "order": 14,
+   "qty": 500,
+   "unit": "g"
+  },
+  "oil": {
+   "name": "Cooking oil",
+   "cat": "basics",
+   "order": 15,
+   "qty": 3000,
+   "unit": "ml",
+   "note": "sunflower or groundnut"
+  },
+  "ghee": {
+   "name": "Ghee",
+   "cat": "basics",
+   "order": 16,
+   "qty": 500,
+   "unit": "g"
+  },
+  "sugar": {
+   "name": "Sugar",
+   "cat": "basics",
+   "order": 17,
+   "qty": 3000,
+   "unit": "g"
+  },
+  "salt": {
+   "name": "Salt (iodized)",
+   "cat": "basics",
+   "order": 18,
+   "qty": 1000,
+   "unit": "g"
+  },
+  "jaggery": {
+   "name": "Jaggery",
+   "cat": "basics",
+   "order": 19,
+   "qty": 500,
+   "unit": "g"
+  },
+  "tea": {
+   "name": "Tea powder",
+   "cat": "basics",
+   "order": 20,
+   "qty": 500,
+   "unit": "g"
+  },
+  "peanuts": {
+   "name": "Peanuts",
+   "cat": "basics",
+   "order": 21,
+   "qty": 500,
+   "unit": "g",
+   "note": "for poha"
+  },
+  "tamarind": {
+   "name": "Tamarind",
+   "cat": "basics",
+   "order": 22,
+   "qty": 250,
+   "unit": "g"
+  },
+  "coffee": {
+   "name": "Coffee",
+   "cat": "basics",
+   "order": 23,
+   "qty": 200,
+   "unit": "g",
+   "note": "only if you drink it"
+  },
+  "turmeric": {
+   "name": "Turmeric powder",
+   "cat": "powders",
+   "order": 24,
+   "qty": 200,
+   "unit": "g"
+  },
+  "chilli": {
+   "name": "Red chilli powder",
+   "cat": "powders",
+   "order": 25,
+   "qty": 500,
+   "unit": "g"
+  },
+  "dhaniya": {
+   "name": "Coriander powder",
+   "cat": "powders",
+   "order": 26,
+   "qty": 500,
+   "unit": "g"
+  },
+  "jeerap": {
+   "name": "Jeera powder",
+   "cat": "powders",
+   "order": 27,
+   "qty": 100,
+   "unit": "g"
+  },
+  "garam": {
+   "name": "Garam masala",
+   "cat": "powders",
+   "order": 28,
+   "qty": 100,
+   "unit": "g"
+  },
+  "chicken_masala": {
+   "name": "Chicken masala",
+   "cat": "powders",
+   "order": 29,
+   "qty": 200,
+   "unit": "g"
+  },
+  "sambar": {
+   "name": "Sambar powder",
+   "cat": "powders",
+   "order": 30,
+   "qty": 200,
+   "unit": "g"
+  },
+  "rasam": {
+   "name": "Rasam powder",
+   "cat": "powders",
+   "order": 31,
+   "qty": 100,
+   "unit": "g"
+  },
+  "pepperp": {
+   "name": "Black pepper powder",
+   "cat": "powders",
+   "order": 32,
+   "qty": 50,
+   "unit": "g"
+  },
+  "chaat": {
+   "name": "Chaat masala",
+   "cat": "powders",
+   "order": 33,
+   "qty": 50,
+   "unit": "g"
+  },
+  "hing": {
+   "name": "Hing (asafoetida)",
+   "cat": "powders",
+   "order": 34,
+   "qty": 25,
+   "unit": "g"
+  },
+  "kasuri": {
+   "name": "Kasuri methi",
+   "cat": "powders",
+   "order": 35,
+   "qty": 25,
+   "unit": "g"
+  },
+  "jeera": {
+   "name": "Jeera (cumin)",
+   "cat": "whole",
+   "order": 36,
+   "qty": 250,
+   "unit": "g"
+  },
+  "mustard": {
+   "name": "Mustard seeds",
+   "cat": "whole",
+   "order": 37,
+   "qty": 250,
+   "unit": "g"
+  },
+  "dhaniya_seeds": {
+   "name": "Coriander seeds",
+   "cat": "whole",
+   "order": 38,
+   "qty": 200,
+   "unit": "g"
+  },
+  "drychilli": {
+   "name": "Dry red chillies",
+   "cat": "whole",
+   "order": 39,
+   "qty": 250,
+   "unit": "g"
+  },
+  "methi": {
+   "name": "Methi seeds",
+   "cat": "whole",
+   "order": 40,
+   "qty": 100,
+   "unit": "g"
+  },
+  "saunf": {
+   "name": "Saunf (fennel)",
+   "cat": "whole",
+   "order": 41,
+   "qty": 100,
+   "unit": "g"
+  },
+  "ajwain": {
+   "name": "Ajwain",
+   "cat": "whole",
+   "order": 42,
+   "qty": 50,
+   "unit": "g"
+  },
+  "pepper": {
+   "name": "Black pepper",
+   "cat": "whole",
+   "order": 43,
+   "qty": 50,
+   "unit": "g"
+  },
+  "cloves": {
+   "name": "Cloves",
+   "cat": "whole",
+   "order": 44,
+   "text": "25–50 g"
+  },
+  "cardamom": {
+   "name": "Cardamom",
+   "cat": "whole",
+   "order": 45,
+   "text": "25–50 g"
+  },
+  "cinnamon": {
+   "name": "Cinnamon",
+   "cat": "whole",
+   "order": 46,
+   "text": "25–50 g"
+  },
+  "bayleaf": {
+   "name": "Bay leaf",
+   "cat": "whole",
+   "order": 47,
+   "text": "25–50 g"
+  },
+  "pickle": {
+   "name": "Pickle",
+   "cat": "extras",
+   "order": 48
+  },
+  "papad": {
+   "name": "Papad",
+   "cat": "extras",
+   "order": 49
+  },
+  "biscuits": {
+   "name": "Biscuits or rusk",
+   "cat": "extras",
+   "order": 50,
+   "note": "for tea"
+  },
+  "bread": {
+   "name": "Bread and butter",
+   "cat": "extras",
+   "order": 51
+  },
+  "soda": {
+   "name": "Baking soda and Eno",
+   "cat": "extras",
+   "order": 52
+  },
+  "dishwash": {
+   "name": "Dishwash",
+   "cat": "extras",
+   "order": 53
+  },
+  "detergent": {
+   "name": "Detergent",
+   "cat": "extras",
+   "order": 54
+  },
+  "toilet": {
+   "name": "Toilet items",
+   "cat": "extras",
+   "order": 55
+  },
+  "milk": {
+   "name": "Milk",
+   "cat": "fresh",
+   "order": 56
+  },
+  "veg": {
+   "name": "Vegetables",
+   "cat": "fresh",
+   "order": 57
+  },
+  "chicken": {
+   "name": "Chicken",
+   "cat": "fresh",
+   "order": 58
+  },
+  "eggs": {
+   "name": "Eggs",
+   "cat": "fresh",
+   "order": 59
+  },
+  "ginger": {
+   "name": "Ginger",
+   "cat": "fresh",
+   "order": 60
+  },
+  "garlic": {
+   "name": "Garlic",
+   "cat": "fresh",
+   "order": 61
+  },
+  "greenchilli": {
+   "name": "Green chillies",
+   "cat": "fresh",
+   "order": 62
+  },
+  "curryleaves": {
+   "name": "Curry leaves",
+   "cat": "fresh",
+   "order": 63
+  },
+  "coriander": {
+   "name": "Coriander leaves",
+   "cat": "fresh",
+   "order": 64
+  },
+  "coconut": {
+   "name": "Coconut",
+   "cat": "fresh",
+   "order": 65
+  }
+ },
+ "months": {},
+ "weeks": {}
+}

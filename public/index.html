@@ -2,15 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Monthly Ration</title>
 <meta name="description" content="Monthly and weekly ration checklist with spending and review.">
-<meta name="theme-color" content="#b45309">
+<meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16130f" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ration">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="app.css">
 <script type="module" src="app.js"></script>
 </head>
@@ -33,9 +36,15 @@
 
 <dialog id="sheet" aria-labelledby="sheetTitle">
   <form id="sheetForm">
-    <h2 id="sheetTitle" tabindex="-1" autofocus></h2>
-    <div id="sheetBody" class="fields"></div>
-    <div id="sheetActions" class="sheet-actions"></div>
+    <div class="sheet-head"><span class="grabber" aria-hidden="true"></span><h2 id="sheetTitle" tabindex="-1" autofocus></h2></div>
+    <div id="sheetScroll" class="sheet-scroll">
+      <div id="sheetBody" class="fields"></div>
+      <div id="sheetExtra" class="sheet-extra" hidden></div>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn" id="sheetCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="sheetSubmit">Save</button>
+    </div>
   </form>
 </dialog>
 

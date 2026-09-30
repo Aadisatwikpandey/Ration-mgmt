@@ -4,6 +4,8 @@ import { WEEKDAYS, icsDate, reminderEvents } from "./shared/schedule.js";
 const CACHE_KEY = "ration-v2";
 const UI_KEY = "ration-ui";
 const DEFAULT_START = "2026-10";
+const SAVE_DELAY_MS = 400; // batch quick taps into one save
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FB = {
   more: { label: "Ran out early", short: "↑ ran out", icon: "↑" },
   ok: { label: "Just right", short: "✓ right", icon: "✓" },
@@ -115,7 +117,7 @@ let pending = []; // ops not yet saved to the server
 let view = null; // server data + pending ops, what the UI shows
 let pushing = false;
 let saveTimer = null;
-let pollTimer = null;
+let polling = false;
 let syncState = "loading";
 
 const ui = { tab: "list", mode: "monthly", month: monthKey(), week: weekKey(), closed: {} };
@@ -209,7 +211,7 @@ function change(ops, { rerender = true } = {}) {
   if (rerender) render();
   setSync(syncState);
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(push, session?.saveDelayMs ?? 400);
+  saveTimer = setTimeout(push, SAVE_DELAY_MS);
 }
 
 async function push() {
@@ -219,9 +221,8 @@ async function push() {
   const batch = pending.slice();
   try {
     const r = await api("POST", "api/ops", { ops: batch });
-    server = { rev: r.rev, data: r.data };
     pending = pending.slice(batch.length);
-    recompute();
+    if (!acceptServer(r)) recompute();
     saveCache();
     setSync("ok");
     renderIfIdle();
@@ -246,17 +247,21 @@ async function push() {
   }
 }
 
+// The server is the source of truth: take any revision that differs from ours. (It can go
+// down, e.g. after a backup is restored by hand. A briefly stale answer heals on the next check.)
+function acceptServer(r) {
+  if (r.unchanged || r.rev === server?.rev) return false;
+  server = { rev: r.rev, data: r.data };
+  recompute();
+  saveCache();
+  return true;
+}
+
 async function pull() {
   if (pushing || saveTimer) return;
   if (pending.length) return push();
   try {
-    const r = await api("GET", `api/state?rev=${server?.rev ?? ""}`);
-    if (!r.unchanged) {
-      server = { rev: r.rev, data: r.data };
-      recompute();
-      saveCache();
-      renderIfIdle();
-    }
+    if (acceptServer(await api("GET", `api/state?rev=${server?.rev ?? ""}`))) renderIfIdle();
     setSync("ok");
   } catch (e) {
     setSync(e.status === 401 ? "locked" : "offline");
@@ -264,11 +269,45 @@ async function pull() {
   }
 }
 
-function startPolling() {
-  if (pollTimer) return;
-  pollTimer = setInterval(() => document.visibilityState === "visible" && pull(), session?.pollMs || 5000);
-  document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && pull());
+// While the app is on screen, keep one request waiting at the server; it answers the
+// moment the other phone saves something (or after 25 s). No polling, no wasted wake-ups.
+async function watch() {
+  if (polling) return;
+  polling = true;
+  let quick = 0;
+  try {
+    while (document.visibilityState === "visible") {
+      if (pushing || saveTimer || pending.length) {
+        if (pending.length && !pushing && !saveTimer) push();
+        await sleep(1000);
+        continue;
+      }
+      const started = Date.now();
+      try {
+        const r = await api("GET", `api/state?rev=${server?.rev ?? ""}&wait=25`);
+        setSync("ok");
+        if (acceptServer(r)) renderIfIdle();
+        // Safety brake: answers that keep coming back instantly mean something is off; slow down.
+        quick = Date.now() - started < 500 ? quick + 1 : 0;
+        if (quick >= 3) await sleep(5000);
+      } catch (e) {
+        setSync(e.status === 401 ? "locked" : "offline");
+        if (e.status === 401) { showLogin(); break; }
+        await sleep(10000);
+      }
+    }
+  } finally {
+    polling = false;
+  }
 }
+
+function startPolling() {
+  watch();
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && server) watch();
+  syncWakeLock();
+});
 
 // ---------- rendering ----------
 function typingInMain() {
@@ -286,6 +325,22 @@ function render() {
   main.innerHTML = { list: renderList, spend: renderSpend, review: renderReview, settings: renderSettings }[ui.tab]();
   // Widths are set here rather than in inline styles, which the page's security policy blocks.
   main.querySelectorAll("[data-w]").forEach((el) => (el.style.width = `${el.dataset.w}%`));
+  syncWakeLock();
+}
+
+// Keep the screen on while a wholesale trip is open on the List tab (HTTPS only).
+let wakeLock = null;
+async function syncWakeLock() {
+  const want = !!view && ui.tab === "list" && ui.mode === "monthly" && !!trip()?.p.open && document.visibilityState === "visible";
+  if (want && !wakeLock && navigator.wakeLock) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => (wakeLock = null));
+    } catch {}
+  } else if (!want && wakeLock) {
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
 }
 
 function switcher(kind) {
@@ -368,7 +423,7 @@ function renderList() {
           <div class="muted">${money(freshSpend)} so far on veg, milk, chicken…</div></div>
           <button type="button" class="btn" data-act="quick" data-month="${weekMonth}">+ Log spend</button></div></section>`}
     <div class="wrap-row no-print card">
-      <button type="button" class="btn" data-act="print">🖨️ Print list</button>
+      <button type="button" class="btn" data-act="share">📤 Share what's left</button>
       <span class="muted">Tap ⋯ on an item to change it, see what you paid, or mark it ran out / left over.</span>
     </div>`;
 }
@@ -601,7 +656,7 @@ function renderSettings() {
 
     <section class="card">
       <h2>Your data</h2>
-      <p class="muted">${session?.storage === "blob" ? "Saved in a private Vercel Blob store" : "Saved on the Mac mini"}: <code>${esc(session?.where || "")}</code>.
+      <p class="muted">Saved on the Mac mini: <code>${esc(session?.where || "")}</code>.
         A dated copy is kept every day and nothing is ever deleted. Past months stay in history.</p>
       <div class="wrap-row">
         <a class="btn" href="api/export" download>⬇️ Download backup</a>
@@ -620,41 +675,71 @@ function renderSettings() {
 
 // ---------- sheets (dialogs) ----------
 let sheetSubmit = null;
+// Sheets add a history entry so the phone's back button closes the sheet, not the app.
+let ignorePop = false;
+let afterPop = null;
+let closingFromPop = false;
+
 function openSheet({ title, body, submit = "Save", onSubmit, extra = [] }) {
   $("#sheetTitle").textContent = title;
   $("#sheetBody").innerHTML = body;
-  const actions = $("#sheetActions");
-  actions.innerHTML = "";
+  const more = $("#sheetExtra");
+  more.innerHTML = "";
+  more.hidden = !extra.length;
   for (const b of extra) {
     const el = document.createElement("button");
     el.type = "button";
     el.className = `btn ${b.cls || ""}`;
     el.textContent = b.label;
     el.onclick = () => { if (b.onClick() !== false) closeSheet(); };
-    actions.append(el);
+    more.append(el);
   }
-  const spacer = document.createElement("span");
-  spacer.className = "spacer";
-  const cancel = document.createElement("button");
-  cancel.type = "button";
-  cancel.className = "btn";
-  cancel.textContent = "Cancel";
-  cancel.onclick = closeSheet;
-  const ok = document.createElement("button");
-  ok.type = "submit";
-  ok.className = "btn primary";
-  ok.textContent = submit;
-  actions.append(spacer, cancel, ok);
+  $("#sheetSubmit").textContent = submit;
   sheetSubmit = onSubmit;
-  if (!$("#sheet").open) $("#sheet").showModal();
+  $("#sheetScroll").scrollTop = 0;
+  if (!$("#sheet").open) {
+    $("#sheet").showModal();
+    history.pushState({ ...(history.state || {}), sheet: true }, "");
+  }
 }
 function closeSheet() {
   if ($("#sheet").open) $("#sheet").close();
-  sheetSubmit = null;
   render();
 }
-// Opens a second sheet right after the current one closes.
-const thenOpen = (fn) => () => { setTimeout(fn); };
+// Opens another sheet once the current one (and its history entry) is gone.
+const thenOpen = (fn) => () => { afterPop = fn; };
+
+$("#sheet").addEventListener("close", () => {
+  sheetSubmit = null;
+  if (!closingFromPop && history.state?.sheet) {
+    ignorePop = true;
+    history.back();
+  } else if (afterPop) {
+    const fn = afterPop;
+    afterPop = null;
+    setTimeout(fn);
+  }
+  closingFromPop = false;
+});
+$("#sheetCancel").addEventListener("click", closeSheet);
+// Tapping the dimmed area outside the sheet closes it.
+$("#sheet").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeSheet(); });
+
+window.addEventListener("popstate", (e) => {
+  if (ignorePop) {
+    ignorePop = false;
+    if (afterPop) { const fn = afterPop; afterPop = null; fn(); }
+    return;
+  }
+  if ($("#sheet").open) {
+    closingFromPop = true;
+    $("#sheet").close();
+    render();
+    return;
+  }
+  const tab = e.state?.tab;
+  if (tab && tab !== ui.tab) { ui.tab = tab; saveUi(); render(); window.scrollTo(0, 0); }
+});
 
 const catOptions = (selected) =>
   Object.entries(view.categories).sort(byOrder)
@@ -916,7 +1001,6 @@ $("#sheetForm").addEventListener("submit", (e) => {
   const fd = new FormData(e.target);
   if (sheetSubmit?.(Object.fromEntries(fd), fd) !== false) closeSheet();
 });
-$("#sheet").addEventListener("close", () => { sheetSubmit = null; });
 // Top-up line rows: add, remove, running total.
 $("#sheetBody").addEventListener("click", (e) => {
   if (e.target.closest("[data-line-add]")) {
@@ -936,7 +1020,9 @@ document.addEventListener("click", (e) => {
   const el = e.target.closest("[data-act],[data-tab]");
   if (!el || el.closest("#sheet")) return;
   if (el.dataset.tab) {
+    if (el.dataset.tab === ui.tab) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     ui.tab = el.dataset.tab;
+    history.pushState({ tab: ui.tab }, "");
     saveUi();
     render();
     window.scrollTo(0, 0);
@@ -986,10 +1072,7 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "restore": change([{ p: ["items", id, "archived"], d: 1 }]); break;
-    case "print":
-      document.querySelectorAll("details.cat").forEach((d) => (d.open = true));
-      window.print();
-      break;
+    case "share": shareList(); break;
     case "logout": logout(); break;
   }
 });
@@ -998,6 +1081,7 @@ document.addEventListener("change", (e) => {
   const t = e.target;
   if (t.closest("#sheet")) return;
   if (t.dataset.check) {
+    if (t.checked) navigator.vibrate?.(10);
     const path = [...(t.dataset.scope === "week" ? ["weeks", ui.week] : ["months", ui.month]), "checked", t.dataset.check];
     change([t.checked ? { p: path, v: true } : { p: path, d: 1 }]);
   } else if (t.dataset.price) {
@@ -1088,6 +1172,41 @@ async function logout() {
   location.reload();
 }
 
+// The items not yet ticked, as plain text for WhatsApp or anywhere else.
+function listText() {
+  const monthly = ui.mode === "monthly";
+  const checked = (monthly ? M() : W()).checked || {};
+  const lines = [`🧺 ${monthly ? monthLabel(ui.month) + " ration" : weekLabel(ui.week) + " fresh"} list`];
+  for (const [cid, c] of catsOf(monthly ? "monthly" : "weekly")) {
+    const left = itemsIn(cid).filter(([id]) => !checked[id]);
+    if (!left.length) continue;
+    lines.push("", `*${c.title}*`);
+    for (const [, it] of left) lines.push(`• ${it.name}${qtyText(it) ? ` – ${qtyText(it)}` : ""}`);
+  }
+  if (lines.length === 1) lines.push("", "All picked ✅");
+  return lines.join("\n");
+}
+
+async function shareList() {
+  const text = listText();
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    try { await navigator.clipboard.writeText(text); return toast("List copied. Paste it in WhatsApp."); } catch {}
+  }
+  // Plain-HTTP pages can't use the share sheet or clipboard API, so copy the old way.
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.className = "offscreen";
+  document.body.append(ta);
+  ta.select();
+  const ok = document.execCommand("copy");
+  ta.remove();
+  toast(ok ? "List copied. Paste it in WhatsApp." : "Couldn't copy the list.");
+}
+
 let toastTimer;
 function toast(msg) {
   const el = $("#toast");
@@ -1127,17 +1246,30 @@ async function loadFromServer() {
   await pull();
   if (!server) return showFatal("Couldn't load your list from the server.");
   render();
+  openShortcut();
   startPolling();
 }
 
+// Home-screen shortcuts (long-press the app icon) open with ?go=topup or ?go=spend.
+function openShortcut() {
+  const go = new URLSearchParams(location.search).get("go");
+  if (!go) return;
+  history.replaceState({ tab: ui.tab }, "", location.pathname);
+  if (go === "spend") { ui.tab = "spend"; render(); }
+  if (go === "topup") { ui.tab = "list"; ui.mode = "monthly"; render(); openTopup(null); }
+}
+
 async function boot() {
+  history.replaceState({ tab: ui.tab }, "");
+  // Lets the app open with no signal (e.g. at the market). Browsers allow this on HTTPS only.
+  if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});
   loadCache();
   if (view) render();
   try {
     session = await api("GET", "api/session");
   } catch {
     setSync("offline");
-    if (!view) showFatal("Can't reach the server. Is the Mac mini on and are you on the home Wi-Fi?");
+    if (!view) showFatal("Can't reach the Mac mini. Are you on the home Wi-Fi (or Tailscale)?");
     return startPolling();
   }
   if (session.setupError) return showFatal(session.setupError);
