@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monthly Ration</title>
+<meta name="description" content="Monthly and weekly ration checklist with spending and review.">
+<meta name="theme-color" content="#b45309">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ration">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>🧺 Ration</h1>
+    <div class="sync" id="sync"><span class="dot"></span><span id="syncText">Loading…</span></div>
+  </div>
+</header>
+
+<main id="view" class="wrap"><p class="muted center">Loading…</p></main>
+
+<nav class="tabs" aria-label="Sections">
+  <button type="button" data-tab="list"><span aria-hidden="true">📝</span>List</button>
+  <button type="button" data-tab="spend"><span aria-hidden="true">₹</span>Spend</button>
+  <button type="button" data-tab="review"><span aria-hidden="true">🔁</span>Review</button>
+  <button type="button" data-tab="settings"><span aria-hidden="true">⚙️</span>Settings</button>
+</nav>
+
+<dialog id="sheet" aria-labelledby="sheetTitle">
+  <form id="sheetForm">
+    <h2 id="sheetTitle" tabindex="-1" autofocus></h2>
+    <div id="sheetBody" class="fields"></div>
+    <div id="sheetActions" class="sheet-actions"></div>
+  </form>
+</dialog>
+
+<div id="login" class="overlay" hidden>
+  <form id="loginForm" class="login-card">
+    <div class="big" aria-hidden="true">🧺</div>
+    <h2>Monthly Ration</h2>
+    <p class="muted">Enter your PIN to open the list.</p>
+    <input id="pin" type="password" autocomplete="current-password" aria-label="PIN" required>
+    <p id="loginErr" class="err" role="alert"></p>
+    <button class="btn primary wide" type="submit">Unlock</button>
+  </form>
+</div>
+
+<div id="fatal" class="overlay" hidden>
+  <div class="login-card"><h2>Can't open the app</h2><p id="fatalMsg" class="muted"></p></div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
